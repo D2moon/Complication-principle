@@ -1,21 +1,22 @@
 import numpy as np #导入Numpy库
 
 
-ExpGrammer=["E->T E'","E'->w0 T E'","E'->!","T->F T'" ,"T'->w1 F T'","T'->!","F->i","F->( E )"]  # 文法
-terminal=["i","w0","w1","(",")","!"]#终结符
+ExpGrammer = []#=["E->T E'","E'->w0 T E'","E'->!","T->F T'" ,"T'->w1 F T'","T'->!","F->i","F->( E )"]  # 文法
+terminal=["!","+","-","*","/","id",";","(",")","{","}","==","!=","<",">","<=",">=","int","if",
+          "return","while","else","void",","]#终结符
 unterminal=["E","T","T'","E'","F"]#非终结符
 list1=[]
 
-'''
-mea=input(“请输入开启问文件位置 :”)
+
+mea=input('请输入开启问文件位置 :')
 input
 with open (mea,mode='r') as fuck:
     list1=fuck.readlines()
 fuck.close()
 print(list1)
 #麻烦自己按照文件写入方式进行读取
-设置 ExpGrammer  terminal  unterminal
-'''
+#设置 ExpGrammer  terminal  unterminal
+
 
 # 求fist 集合
 
@@ -187,7 +188,7 @@ for i in ExpGrammer:
     print(getSele(i))
 
 print(makelist())
-'''
+
 name2=input("请输入存储位置:   ")
 with open(name2,mode='w') as fuck_you:
     for i in ExpGrammer:
@@ -196,4 +197,3 @@ with open(name2,mode='w') as fuck_you:
         fuck_you.write("\n")
 
 fuck_you .close()
-'''

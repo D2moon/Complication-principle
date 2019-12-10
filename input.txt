@@ -1,0 +1,67 @@
+cx->smc
+smc->sm cons1
+cons1->!
+cons1->sm cons1
+sm->int id smlx
+sm->void id smlx
+smlx->blsm
+smlx->hssm
+blsm->;
+hssm->( xc ) yjk
+xc->csb
+xc->！
+csb->cs cons2
+cs->int id
+cons2->, cs cons2
+cons2->!
+yjk->{ nbsm yjc }
+nbsm->!
+nbsm->cons3
+cons3->nbblsm cons3
+cons3->!
+nbblsm->int id ;
+yjc->yj cons4
+cons4->yj cons4
+cons4->!
+yj->ifyj
+yj->whileyj
+yj->returnyj
+yj->fzyj
+ifyj->if ( bds ) yjk cons5
+cons5->!
+cons5->else yjk
+whileyj->while ( bds ) yjk
+returnyj->return cons6 ;
+cons6->!
+cons6->bds
+fzyj->id = bds ;
+bds->jfbds cons7
+cons7->!
+cons7->relop jfbds
+relop->==
+relop->!=
+relop->>
+relop-><
+relop-><=
+relop->>=
+jfbds->T E
+E->w1 T E
+E->!
+T->F T1
+T1->w2 F T1
+T1->!
+F->x
+F->( jfbds )
+x->sz
+w1->+
+w1->-
+w2->*
+w2->/
+x->id ftype
+ftype->call
+ftype->!
+call->( sclb )
+sclb->!
+sclb->bds cons8
+cons8->!
+cons8->, bds cons8
