@@ -64,7 +64,3 @@ call->( sclb )
 sclb->bds cons8
 cons8->!
 cons8->, bds cons8
-id->zm cons9
-cons9->!
-cons9->zm cons9
-cons9->sz cons9
