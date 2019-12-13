@@ -1,10 +1,10 @@
-程序			cx          q1
+程序		cx          q1
 声明串		sm          q2
 声明 		smc         q3
 声明类型		smlx        q4
 变量声明		blsm        q5
 函数声明		hssm        q6
-形参			xc          q7
+形参		xc          q7
 参数表      	csb         q8
 参数 		cs          q9
 语句块 		yjk         w1
@@ -25,7 +25,7 @@ call  		call        r6
 实参  		sc          r7
 实参列表 	sclb        r8
 relop       relop       r9
-数字			sz          sz
+数字		sz          sz
 
 运算符       + -         ss1
             * /         ss2

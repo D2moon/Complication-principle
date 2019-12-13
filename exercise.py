@@ -1,6 +1,9 @@
-mea=input('请输入开启问文件位置 :')
-input
-with open (mea,mode='r', encoding='UTF-8', errors='ignore') as fuck:
-    list1=fuck.readlines()
-fuck.close()
-print(list1)
+class Data:
+    def __init__(self, _type = '', _val = 0, _str = ''):
+        self.type = _type
+        self.val = _val
+        self.str = _str
+
+
+d1 = Data()
+print(d1.val)

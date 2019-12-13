@@ -2,7 +2,7 @@ k_word = {'int': 1, 'void': 2, 'if': 3, 'return': 4, 'while':5, 'else':6}       
 p_word = {'{': 1, '}': 2, '(': 3, ')': 4, '[': 5, ']': 6, '=': 7, '<': 8, '>': 9, '<=': 10, '>=': 11, '!=': 12,
           '==': 13, '+': 14, '-': 15, '*': 16, '/': 17, ';': 18, ',': 19}   # 界符表
 i_word = {}                             # 标识符表
-c_word = {}                             # 字符表
+c_word = {}                             # 数字表
 s_word = {}                             # 字符串表
 ch_word = {}                            # 字符表
 numk = 2
@@ -12,11 +12,22 @@ numc = 0
 nums = 0        # 当前字符串的数量
 nump = 19
 statep = 0
+
+
+class Data:
+    def __init__(self, _type='', _val=0, _str=''):
+        self.type = _type
+        self.val = _val
+        self.str = _str
+
+
+Token = []
+
 fo = open('output.txt', 'w')
 
 
 def addtoi_word(s):  # 添加至标识符
-    print(s)
+    #print(s)
     global numi
     if len(s) == 0:
         return
@@ -25,8 +36,12 @@ def addtoi_word(s):  # 添加至标识符
             numi = numi + 1
             i_word[s] = numi
         fo.write('<I,%d>\n' % i_word[s])
+        d1 = Data('I', 0, s)
+        Token.append(d1)
     else:
         fo.write('<K,%d>\n' % k_word[s])
+        d1 = Data('K', 0, s)
+        Token.append(d1)
 
 
 def addtos_word(s):  # 添加至字符串
@@ -35,6 +50,8 @@ def addtos_word(s):  # 添加至字符串
         nums = nums + 1
         s_word[s] = nums
     fo.write('<S,%d>\n' % s_word[s])
+    d1 = Data('S', 0, s)
+    Token.append(d1)
 
 
 def todo():  # 整活
@@ -44,23 +61,20 @@ def todo():  # 整活
     global numk
     global numc
     global numch
-    global nn1
     global statep
-    nn1 = -1
     f = open('input.txt')           # f代表要读取的文件
 
     lines = f.readlines()           # 读出文件的内容，按行存储在列表lines中
-    print(lines)
+    #print(lines)
     for line in lines:
         lens = len(line)
-        print(line)
+        #print(line)
         state = 0  # 标识符
         strs = ''  # 存放字符串
         strp = ''  # 存放界符
         strc = ''  # 存放常数
         statech = 0
         i = 0
-        nn1 = -1
         while i < lens:
             if line[i] == '\n':
                 i += 1
@@ -87,6 +101,8 @@ def todo():  # 整活
                     numch = numch + 1
                     ch_word[line[i]] = numch
                 fo.write('<CH,%d>\n' % ch_word[line[i]])
+                d1 = Data('CH', 0, line[i])
+                Token.append(d1)
                 i += 1
                 continue
             elif statech == 1 and line[i] == '\'':
@@ -119,8 +135,9 @@ def todo():  # 整活
                     numc = numc + 1
                     c_word[strc] = numc
                 fo.write('<C,%d>\n' % c_word[strc])
+                d1 = Data('C', strc, '')
+                Token.append(d1)
                 strc = ''
-                # nn1 = i
                 i += 1
                 continue
             stn = ''
@@ -141,6 +158,8 @@ def todo():  # 整活
                             statep=1
                             strp = strp + line[ali+1]
                 fo.write('<P,%d>\n' % p_word[strp])
+                d1 = Data('P', 0, strp)
+                Token.append(d1)
 
                 strp = ''
                 i += 1
@@ -157,16 +176,6 @@ def todo():  # 整活
 
 
 todo()
+d1 = Data('#', 0, '#')
+Token.append(d1)
 fo.close()
-print('关键字表')
-print(k_word)
-print('标识符表')
-print(i_word)
-print('界符表')
-print(p_word)
-print('字符串表')
-print(s_word)
-print('常数表')
-print(c_word)
-print('字符表')
-print(ch_word)

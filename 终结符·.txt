@@ -21,4 +21,5 @@
 "while",
 "else",
 "void",
+"sz",
 ","]

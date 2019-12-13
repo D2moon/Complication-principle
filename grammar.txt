@@ -9,14 +9,14 @@ q4->q6
 q5->;
 q6->( q7 ) w1
 q7->q8
-q7->！
+q7->!
 q8->q9 cons2
 q9->int id
 cons2->, q9 cons2
 cons2->!
 w1->{ w2 w4 }
 w2->!
-w2->cons3
+w2->w3 cons3
 cons3->w3 cons3
 cons3->!
 w3->int id ;
