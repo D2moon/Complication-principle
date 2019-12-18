@@ -20,7 +20,7 @@ return语句  returnyj     w8
 加法表达式 	jfbds       r2
 项 			x           r3
 因子 		yz          r4
-FTYPE 		ftype       r5
+FUN 		FUN         r5
 call  		call        r6
 实参  		sc          r7
 实参列表 	sclb        r8

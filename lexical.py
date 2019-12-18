@@ -33,8 +33,6 @@ def main():
         ne = Dirt[stack[-1]][t1]
 
         if not ne:
-            #print(pick[i])
-            #print(stack[-1])
             print(stack[-1], end=' ')
             print(pick[i])
             flag = False
@@ -51,9 +49,14 @@ def main():
         flag = False
     if not flag:
         print('语法使用错误')
+        return False
     else:
         print('语法正确')
+        return True
 
 
 if __name__ == '__main__':
     main()
+
+# grammar1.txt
+

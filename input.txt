@@ -1,1 +1,22 @@
-int a = -100;
+
+int t;
+int main()
+{
+    int a;
+    a = 10;
+    if(a>10) {
+        a=a+1;
+    }
+    while(a < 10) {
+        a = 2*3;
+    }
+    return 10;
+}
+
+
+void f(int a, int b, int c)
+{
+    int b;
+    b = main();
+    return b;
+}

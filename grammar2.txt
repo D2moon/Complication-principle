@@ -4,14 +4,14 @@ cons1->!
 cons1->q2 cons1
 q2->int id q4
 q2->void id q4
-q4->q5
+q4->q5 mm2
 q4->q6
 q5->;
-q6->( q7 ) w1
+q6->( q7 ) tt2 w1 tt3
 q7->q8
 q7->!
 q8->q9 cons2
-q9->int id
+q9->int id mm4
 cons2->, q9 cons2
 cons2->!
 w1->{ w2 w4 }
@@ -19,7 +19,7 @@ w2->!
 w2->w3 cons3
 cons3->w3 cons3
 cons3->!
-w3->int id ;
+w3->int id ; mm5
 w4->w5 cons4
 cons4->w5 cons4
 cons4->!
@@ -27,17 +27,15 @@ w5->w6
 w5->w7
 w5->w8
 w5->w9
-w6->if ( r1 ) w1 cons5
+w6->if ( mm6 r1 ) w1 cons5 mm15
 cons5->!
-cons5->else w1
-w7->while ( r1 ) w1
-w8->return cons6 ;
+cons5->else mm14 w1
+w7->while ( mm6 r1 ) w1 mm16
+w8->return mm10 cons6 mm11 ;
 cons6->!
-cons6->r1
-w9->id = r1 ;
-r1->r2 cons7
-cons7->!
-cons7->r9 r2
+cons6->r2
+w9->id = mm12 r2 mm13 ;
+r1->r2 mm7 r9 mm8 r2 mm9
 r9->==
 r9->!=
 r9->>

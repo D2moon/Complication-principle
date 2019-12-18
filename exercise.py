@@ -1,9 +1,5 @@
-class Data:
-    def __init__(self, _type = '', _val = 0, _str = ''):
-        self.type = _type
-        self.val = _val
-        self.str = _str
+li = [1, 2, 3]
 
 
-d1 = Data()
-print(d1.val)
+li.insert(0, 10)
+print(li)

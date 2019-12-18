@@ -1,0 +1,48 @@
+class Node:                 #四元式类
+    def __init__(self):
+        self.op = ''
+        self.t1 = ''
+        self.t2 = ''
+        self.type = ''
+
+
+函数：
+<返回类型，参数1，参数2，函数名>
+<op, t1, t2, type>
+例如：<main, a, b, int>
+同名连续函数四元式表示统一函数
+
+声明：
+<数据类型，变量名， ， >
+<int, t1, , >
+
+赋值语句:
+<变量1，=，变量2， >
+<t1, =, t2, >
+t1 = t2;
+
+四则运算：
+<变量1，运算符，变量2，变量3>
+<t1, *, t2, t3>
+t1 = t2*t3;
+
+if语句:
+<if，res(E)， ， >      E为真跳转
+<el， ， ， >
+<ie， ， ， >
+
+while语句:
+<wh， ， ， >			when语句开始
+quat(E1)				判断条件
+<do，res(E)， ， >		跳置E2
+quat(E2)
+<we， ， ， >			跳回E1
+
+
+return语句:
+<re，res(E)， ， >   	返回res(E)的值
+
+
+
+
+
