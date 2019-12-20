@@ -4,7 +4,7 @@ ExpGrammar = []  # 文法
 Grammar = []  # 拆解后文法
 
 terminal = ["!", "+", "-", "*", "/", "id", ";", "(", ")", "{", "}", "==", "!=", "<", ">", "<=", ">=", "int", "if",
-            "return", "while", "else", "void", ",", "sz", "mm1", "mm2", "mm3", "mm4", "mm5"]  # 终结符
+            "return", "while", "else", "void", "=", ",", "sz", "#"]  # 终结符
 
 unterminal = []  # 非终结符
 list1 = []
@@ -247,6 +247,7 @@ dirt = makelist()
 mapa = {}
 for i in range(0, len(Terminal)):
     mapa[Terminal[i]] = i
+
 
 '''
 #print(dirt['cons3'], end=' ')

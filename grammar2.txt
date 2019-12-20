@@ -26,7 +26,7 @@ cons4->!
 w5->w6
 w5->w7
 w5->w8
-w5->w9
+w5->id mm12 w9
 w6->if ( mm6 r1 ) w1 cons5 mm15
 cons5->!
 cons5->else mm14 w1
@@ -34,7 +34,8 @@ w7->while ( mm6 r1 ) w1 mm16
 w8->return mm10 cons6 mm11 ;
 cons6->!
 cons6->r2
-w9->id = mm12 r2 mm13 ;
+w9->= r2 mm13 ;
+w9->r6 pp4 ;
 r1->r2 mm7 r9 mm8 r2 mm9
 r9->==
 r9->!=
@@ -58,8 +59,8 @@ ss2->/
 x->id r5
 r5->r6
 r5->!
-r6->( r8 )
-r8->!
-r8->r1 cons8
+r6->( pp1 kk2 r8 ) pp2
+r8->! kk3
+r8->r2 kk3 cons8
 cons8->!
-cons8->, r1 cons8
+cons8->, kk4 r2 kk5 cons8

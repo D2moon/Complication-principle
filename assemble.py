@@ -1,0 +1,685 @@
+# from queue import Queue,LifoQueue,PriorityQueue
+import re  # 正则表达式匹配模块
+import sys  # 停止程序暂停模块
+import pickle
+from collections import deque  # 队列区域
+import getsym
+getsym.main()
+
+
+f = open('outpro.txt', 'rb')
+QT = pickle.load(f)
+print(QT)
+#
+# QT = [
+#     [
+#         ['+', 'a', 'b', '1t'],
+#         ['-', 'c', 'd', '2t'],
+#         ['*', '1t', '2t', 'x'],
+#         ['=', 'a', ' ', 'y'],
+#         ['/', 'a', 'x', 'x'],
+#         ['+', 'x', '1t', 'x'],
+#         ['=', 'x', ' ', 'a']
+#
+#     ],
+#     [
+#         ['>', 'a', 'b', '1t'],
+#         ['if', '1t', ' ', ' ']
+#     ],
+#
+#     [
+#         ['+', 'a', 'b', '2t'],
+#         ['*', '2t', 'c', 'x'],
+#         ['el', ' ', ' ', ' ']
+#
+#     ],
+#     [
+#
+#         ['*', 'a', 'b', '3t'],
+#         ['-', 5, '3t', 'x']
+#     ],
+#     [
+#         ['ie', ' ', ' ', ' '],
+#         ['+', 'a', 'b', '1t']
+#     ],
+#     [
+#         ['wh', ' ', ' ', ' '],
+#         ['>', 'a', 'b', '1t'],
+#         ['do', '1t', ' ', ' ']
+#     ],
+#     [
+#         ['+', 'a', 'b', '2t'],
+#         ['*', '2t', 'c', 'x'],
+#         ['we', ' ', ' ', ' ']
+#     ],
+#     [
+#         ["+", "a", "b", "3t"]
+#     ]
+#
+# ]  # 算术四元组区
+# RDL = {'R0`': 'null', 'R1`': 'null', "M*": ['a', 'b', 'c', 'd']}  # 寄存器状态描述表  当前变量x值在该寄存器中
+# RDL = {'R`': 'null', 'M*': ['a', 'b', 'c', 'x']}
+RDL = {'R0`': 'null', 'R1`': 'null', 'R2`': 'null', "M*": []}
+ANS = []  # 汇编代码生成存储部分
+operator = {"*", "+", "-", "/", '>', '<', '>=', '<=', '!='}
+operator1 = {"*": 'MUL', '/': 'DIV', '+': 'ADD', '-': 'SUB',
+             '>': 'GT', '<': 'LT', '>=': 'GE', '<=': 'LE', '!=': 'NE', '==': 'EQ'}
+# 特别用例seg4——仿造状态表
+seg4 = {}
+# 用于存储最新状态
+seg5 = {}
+# 用于标注跳转模式状态
+goto_state = deque()
+goto_state1 = deque()
+# 存储if while 子函数标号的地址栈
+if_stack = deque()  # 放的是回填的位置
+while_stack = deque()  # 放的是回填内容和回填位置，会自动进行区分
+# 哈哈哈，绝了，神他妈两种思路
+# 跳转位置标号规则设置记录栈
+f_count = []
+# 生成指令数
+order_quantity = 0
+# 函数返回数据类型
+function_data_type = ["int", 'void']
+function_name = []
+# 四元式头值区分
+four_head = ["+", '-', '*', '/', 'return', 'wh', 'do', 'we', 'if', 'el', 'ie', ' begin', 'end']
+# 主函数状态
+if_main = []
+# 指令数量
+num_instructions = 0
+# 寄存器对应
+register_list = {"R0`": "BX", 'R1`': "CX", "R2`": "DX"}
+# 数据类型
+data_type = ['int', 'float']
+# 从符号表中单独读取 出所有变量名称
+
+
+def get_names(table):
+    SEQ1 = []
+    for i_nan in table:
+        if i_nan[0] in operator or i_nan[0] == '=':
+            for k in range(1, 4):
+                if SEQ1.count(i_nan[k]) == 0 and type(i_nan[k]) == str and i_nan[k] != " ":
+                    SEQ1.append(i_nan[k])
+    for boy in SEQ1:
+        seg5[boy] = 0
+    return SEQ1
+
+
+# 多寄存器活跃状态填写函数
+
+
+def is_active_plus(seg1, seg2):
+    # 初始化状态表 seg1 ——变量表
+    # seg2基本块内四元式区
+    # 该函数修改seg2 返回seg3——最终的各个变量（含中间变量）活跃状态表
+    seg3 = {}
+    num = len(seg2) - 1
+
+    for item in range(0, len(seg1)):
+        if re.match(r'^[0-9]+t', seg1[item]) is None:
+            seg3[seg1[item]] = "y"
+        else:
+            seg3[seg1[item]] = "n"
+
+    # print(seg3)
+    while num >= 0:
+        if seg2[num][0] in operator or seg2[num][0] == '=':
+            no = 3
+            while no >= 0:
+                if seg2[num][no] in seg3.keys():
+                    np = seg2[num][no]
+                    seg2[num][no] = {seg2[num][no]: seg3[np]}
+                    if no == 3:
+                        seg3[np] = 'n'
+                    else:
+                        seg3[np] = num + 1
+                no = no - 1
+        num = num - 1
+    return seg3
+
+
+#  寻址函数 location(X)=Ri则其证明其在Ri中，
+
+
+def location(x):
+    if x == 'null' or type(x) == int:
+        # print("fuck")
+        sys.exit(0)
+    if re.match(r'^R[0-9]*`$', x):
+        if RDL[x] == 'null':
+            #  print(x + "此寄存器为空")
+            return x
+        else:
+            return location(RDL[x])
+    else:
+        for name in RDL.keys():
+            if name != 'M*' and RDL[name] == x:
+                #  print(x + "存于寄存器" + name + "中")
+                return name
+        if x in RDL['M*']:
+            # print(x + "已存于内存中")
+            return x
+        else:
+            # print(x + "所代表值并未存储，无法查址")
+            return "null"
+
+
+# 寄存器求取函数
+def getR(Q, r_add, b_add, c_add):
+    # 四元式必须是可以利用该函数的，确认好的东西
+    global order_quantity
+    py = []  # 活跃向量
+    for girl in range(0, 4):
+        if type(Q[girl]) == dict:
+            h = list(Q[girl].keys())
+            if h[0] not in py:
+                py.append(h[0])
+                seg5[h[0]] = Q[girl][h[0]]
+    state1 = 0
+    if type(Q[1]) != dict and type(Q[2]) != dict:
+        state1 = 3
+        b_add = str(Q[1])
+        c_add = str(Q[2])
+    elif type(Q[1]) != dict and type(Q[2]) == dict and (Q[0] != "+" and Q[0] != "*"):
+        b_add = str(Q[1])
+        state1 = 5
+
+    for i in RDL:
+        if i != "M*" and type(Q[1]) == dict and RDL[i] in Q[1]:
+            state1 = 1
+            break
+
+        elif (type(Q[2]) == dict and type(Q[1]) == int and (Q[0] == "+" or Q[0] == "*")) or \
+                (i != "M*" and (type(Q[2]) == dict and RDL[i] in Q[2]) and (Q[0] == "+" or Q[0] == "*")):
+            t = Q[2]
+            Q[2] = Q[1]
+            Q[1] = t
+            return getR(Q, r_add, b_add, c_add)
+
+    if state1 == 1:
+        # print("主动释放")
+        name = RDL[i]
+        if (seg5[name] == 'y' or (type(seg5[name]) == int and seg5[name] > 0)) and \
+                (name not in RDL['M*'] or name not in Q[3]):
+            state2 = 0
+            for j in RDL.keys():
+                if RDL[j] == "null" and Q[0] != '=':
+                    ANS.append("ST " + register_list[i] + ", " + register_list[j])
+                    order_quantity = order_quantity + 1
+                    RDL[j] = name
+                    state2 = 1
+                    break
+            if state2 == 0:
+                ANS.append("ST " + register_list[i] + ", " + getsym.get_pos(name))
+                order_quantity = order_quantity + 1
+                RDL['M*'].append(name)
+        r_add = location(i)
+        b_add = location(list(Q[1].keys())[0])
+        if Q[0] in operator and type(Q[2]) == dict:
+            c_add = location(list(Q[2].keys())[0])
+        elif type(Q[2]) == int:
+            c_add = str(Q[2])
+        else:
+            c_add = "null"
+        RDL[i] = "null"
+        return [r_add, b_add, c_add]
+    elif state1 == 3:  # 两操作数皆为数据
+        for jk in RDL.keys():
+            if jk != "M*" and RDL[jk] == "null":
+                state1 = 4
+                break
+        if state1 == 4:
+            r_add = jk
+            return [r_add, b_add, c_add]
+        else:
+            list2 = list(RDL.keys())
+            list2.remove("M*")
+            grade1 = 0
+            for name1 in list2:
+                if seg5[RDL[name1]] == 'n':
+                    r_add = name1
+                    RDL[r_add] = 'null'
+                    return [r_add, b_add, c_add]
+                elif seg5[RDL[name1]] == 'y':
+                    r_add = name1
+                    break
+                else:
+                    if seg5[RDL[name1]] > grade1:
+                        r_add = name1
+                        grade1 = seg5[RDL[name1]]
+            if RDL[r_add] not in RDL['M*']:
+                RDL["M*"].append(RDL[r_add])
+            RDL[r_add] = "null"
+            return [r_add, b_add, c_add]
+    elif state1 == 5:  # 不可交换 数 + 变量的  空替换 和强制替换
+        # print("数+字典+不可交换")
+        grade2 = 0
+        for ik in RDL.keys():
+            if ik != "M*" and RDL[ik] == "null":
+                r_add = location(ik)
+                c_add = location(list(Q[2].keys())[0])
+                return [r_add, b_add, c_add]
+            elif ik != "M*" and seg5[RDL[ik]] == 'n':
+                r_add = location(ik)
+                if RDL[r_add] in list(Q[2].keys()) and RDL[r_add] not in RDL["M*"]:
+                    h_name = getsym.get_pos(RDL[r_add])
+                    ANS.append("ST " + register_list[r_add] + ', ' + h_name)
+                    order_quantity = order_quantity + 1
+                    RDL['M*'].append(RDL[ik])
+                RDL[ik] = "null"
+                c_add = location(list(Q[2].keys())[0])
+                return [r_add, b_add, c_add]
+            elif ik != "M*" and seg5[RDL[ik]] == 'y':
+                state1 = 7
+                r_add = location(ik)
+
+            elif ik != "M*" and seg5[RDL[ik]] > grade2 and state1 == 5:
+                grade2 = seg5[RDL[ik]]
+                r_add = location(ik)
+        if RDL[r_add] not in RDL['M*']:
+            ANS.append("ST" + register_list[r_add] + ', ' + getsym.get_pos(RDL[r_add]))
+            order_quantity = order_quantity + 1
+            ['M*'].append(RDL[r_add])
+        RDL[r_add] = "null"
+        return [r_add, b_add, location(list(Q[2].keys())[0])]
+    else:
+        for i in RDL.keys():
+            if i != "M*" and RDL[i] == "null":
+                state1 = 2
+                break
+        if state1 == 2:
+            # print("选空闲者")
+            r_add = location(i)
+            b_add = location(list(Q[1].keys())[0])
+            if Q[0] in operator and type(Q[2]) == dict:
+                c_add = location(list(Q[2].keys())[0])
+            elif type(Q[2]) == int:
+                c_add = str(Q[2])
+            else:
+                c_add = "null "
+            return [r_add, b_add, c_add]
+        else:
+            # print("强制释放")
+            list1 = list(RDL.keys())
+            list1.remove("M*")
+            grade = " "
+            register = " "
+            state3 = 0
+            grade1 = 0
+            for name in list1:
+                if seg5[RDL[name]] == 'n':
+                    if type(Q[2]) == dict and RDL[name] in Q[2].keys():
+                        continue
+                    grade = RDL[name]
+                    register = name
+                    state3 = 1
+                    break
+                elif seg5[RDL[name]] == 'y':
+                    state3 = 2
+                    break
+                else:
+                    if seg5[RDL[name]] > grade1:
+                        grade1 = seg5[RDL[name]]
+                        register = name
+                        grade = RDL[name]
+            if state3 == 2:
+                register = name
+                grade = RDL[register]
+            if grade not in RDL['M*'] and grade != "null" and state3 != 1:
+                ANS.append("ST " + register_list[register] + ", " + getsym.get_pos(grade))
+                order_quantity = order_quantity + 1
+                RDL['M*'].append(grade)
+            r_add = location(register)
+            b_add = location(list(Q[1].keys())[0])
+            if Q[0] in operator and type(Q[2]) == dict:
+                c_add = location(list(Q[2].keys())[0])
+            elif type(Q[2]) == int:
+                c_add = str(Q[2])
+            else:
+                c_add = "null"
+            RDL[register] = "null"
+            return [r_add, b_add, c_add]
+
+
+# 生成汇编代码
+
+
+def mak_assemble(tetrad):
+    R_add = ' '
+    B_add = ' '
+    C_add = ' '
+    switch_wh = 0
+    global order_quantity
+    global num_instructions
+    if tetrad [0] == 'end':
+        for jk in RDL.keys():
+            if jk != "M*" and RDL[jk] != 'null' :
+                if seg5[RDL[jk]] != 'n' and seg5[RDL[jk]] != 0 and RDL[jk] not in RDL['M*']:
+                    print(seg5)
+                    print(QT)
+                    h = getsym.get_pos(RDL[jk])
+                    if type(h) != str:
+                        print(h)
+                        sys.exit(0)
+                    ANS.append("ST " + register_list[jk] + ', ' + h)
+                    RDL['M*'].append(RDL[jk])
+                    RDL[jk] = 'null'
+                elif seg5[RDL[jk]] == 'n':
+                    RDL[jk] = 'null'
+    getsym.solve(num_instructions)
+    num_instructions = num_instructions + 1
+    order_quantity = 0
+    # address获取为空调试函数  千万误删！！！！
+    '''
+    for i in range(0,len(address)):
+        #print(type(address[i]))
+        if address[i]==None:
+            print(str(i)+"处值为空 "+"四元式为")
+            print(tetrad)
+            print(ANS)
+            print(RDL)
+            sys.exit(0)
+
+'''
+    if tetrad[0] == '=':
+        address = getR(tetrad, R_add, B_add, C_add)
+        for i in range(0, len(address)):
+            # print(type(address[i]))
+            if address[i] == "null":
+                print(str(i) + "处值为空 " + "四元式为")
+                print(tetrad)
+                print(ANS)
+                print(RDL)
+                sys.exit(0)
+        if address[0] != address[1]:
+            h_name = address[1]
+
+            if not h_name.isdigit():
+                h_name = getsym.get_pos(h_name)
+            else:
+                h_name = hex(int(h_name)) +"H"
+                print(h_name)
+
+            if address[0] not in register_list.keys():
+                    print(address[0])
+                    sys.exit(0)
+            if not h_name:
+                print(address[1])
+                sys.exit(0)
+            if type(register_list[address[0]]) != str or type(h_name) != str:
+
+                print(register_list[address[0]])
+                print(h_name)
+                sys.exit(0)
+            ANS.append("LD " + register_list[address[0]] + ", " + h_name)
+            order_quantity = order_quantity + 1
+        mm = list(tetrad[3].keys())
+        if mm[0] in RDL['M*']:
+            RDL['M*'].remove(mm[0])
+        for j in RDL:
+            if j != 'M*' and RDL[j] == mm[0]:
+                RDL[j] = 'null'
+        RDL[address[0]] = mm[0]
+    elif tetrad[0] in operator:
+        address = getR(tetrad, R_add, B_add, C_add)
+        if address[0] != address[1]:
+            if not address[1].isdigit():
+                h_name = getsym.get_pos(address[1])
+                ANS.append("LD " + register_list[address[0]] + ", " + h_name)
+            else:
+                h_name = hex(int(address[1])) + "H"
+                ANS.append("LD " + register_list[address[0]] + ", " + h_name)
+            order_quantity = order_quantity + 1
+        op = operator1[tetrad[0]]
+        if op == "MUL" or op == "DIV":
+            ANS.append("MOV AX," + register_list[address[0]])
+            if not address[2].isdigit():
+                h_name = getsym.get_pos(address[2])
+                ANS.append(op + " " + h_name)
+            else:
+                h_name = hex(int(address[2])) + "H"
+                ANS.append(op + ' ' + h_name)
+            order_quantity = order_quantity + 2
+        else:
+            h_name = address[2]
+            if not h_name.isdigit():
+                h_name = getsym.get_pos(h_name)
+            else:
+                h_name = hex(int(h_name)) + "H"
+            ANS.append(op + ' ' + register_list[address[0]] + ', ' + h_name)
+            order_quantity = order_quantity + 1
+        mm = list(tetrad[3].keys())
+        if mm[0] in RDL['M*']:
+            RDL['M*'].remove(mm[0])
+        for j in RDL:
+            if j != 'M*' and RDL[j] == mm[0]:
+                RDL[j] = 'null'
+        RDL[address[0]] = mm[0]
+    elif tetrad[0] == 'if':
+        address = getR(tetrad, R_add, B_add, C_add)
+        h_name = address[1]
+        if re.match(r'R[0-3]+`', h_name):
+            h_name = register_list[h_name]
+        else:
+            h_name = getsym.get_pos(h_name)
+        # 相应的值放入AX
+        ANS.append("MOV AX, " + h_name)
+        order_quantity = order_quantity + 1
+        ANS.append("JZ ")
+        order_quantity = order_quantity + 1
+        goto_state.append(1)
+        if_stack.append(len(ANS) - 1)
+    elif tetrad[0] == 'el':  # 此处为无条件跳转
+        for jk in RDL.keys():
+            if jk != "M*" and RDL[jk] != 'null':
+                if seg5[RDL[jk]] != 'n' and seg5[RDL[jk]] != 0 and RDL[jk] not in RDL['M*']:
+                    h_name = getsym.get_pos(RDL[jk])
+                    ANS.append("ST " + register_list[jk] + ', ' + h_name)
+                    order_quantity = order_quantity + 1
+                    RDL['M*'].append(RDL[jk])
+                    RDL[jk] = 'null'
+        ANS.append("JMP " + while_stack.popleft())
+        order_quantity = order_quantity + 1
+        if_stack.append(len(ANS) - 1)
+        goto_state.append(2)
+        return False
+    elif tetrad[0] == 'ie':
+        for t_name in RDL.keys():
+            if t_name != 'M*' and RDL[t_name] in seg5 and seg5[RDL[t_name]] != 'n' \
+                    and seg5[RDL[t_name]] != 0 and RDL[t_name] not in RDL['M*']:
+                ANS.append("ST " + register_list[t_name] + ', ' + getsym.get_pos(RDL[t_name]))
+        goto_state.append(3)
+        return True  # 这个true  就返回的很有灵性，需要好好仔细研究一下
+    elif tetrad[0] == 'wh':
+        goto_state1.append(1)
+        switch_wh = 1
+    elif tetrad[0] == 'do':
+        address = getR(tetrad, R_add, B_add, C_add)
+        h_name = address[1]
+        if re.match(r'R[0-3]+`',h_name):
+            h_name = register_list[h_name]
+        else:
+            h_name = getsym.get_pos(h_name)
+        # 相应的值放入AX
+        ANS.append("MOV AX, " + h_name)
+        order_quantity = order_quantity + 1
+        ANS.append("JZ ")
+        while_stack.append(len(ANS) - 1)
+        order_quantity = order_quantity + 1
+        return True
+    elif tetrad[0] == 'we':
+        for jk in RDL.keys():
+            if jk != "M*" and RDL[jk] != 'null':
+                if seg5[RDL[jk]] != 'n' and seg5[RDL[jk]] != 0 and RDL[jk] not in RDL['M*']:
+                    ANS.append("ST " + register_list[jk] + ', ' + getsym.get_pos(RDL[jk]))
+                    RDL['M*'].append(RDL[jk])
+                    RDL[jk] = 'null'
+                elif seg5[RDL[jk]] == 'n':
+                    RDL[jk] = 'null'
+        # while  end  部分生成JMP部分
+        cat = while_stack.popleft()
+        if type(cat) == str:
+            ANS.append("JMP " + cat)
+        else:
+            print(cat)
+            # print(len(while_stack))
+            sys.exit(0)
+
+        goto_state1.append(3)
+        while_stack.append(len(ANS) - 1)
+        return False
+    elif tetrad[0] not in four_head and type(tetrad) == str \
+            and tetrad not in function_data_type:
+        ANS.append("CALL " + tetrad[0])
+        m_name = getsym.find_re(tetrad[0])
+        h_name = getsym.get_pos(tetrad[3])
+        ANS.append("MOV " + h_name + ', ' + m_name)
+        order_quantity = order_quantity + 2
+    elif tetrad[0] not in four_head and tetrad[0] != 'main' and type(tetrad) == str \
+            and tetrad in function_data_type:
+        ANS.append(tetrad[0] + '  PROC NEAR')
+        function_name.append(tetrad[0])
+        order_quantity = order_quantity + 1
+    elif tetrad[0] == 'begin':
+        if_main.append(0)
+        ANS.append("PUSH  AX")
+        ANS.append("PUSH  BX")
+        ANS.append("PUSH  CX")
+        ANS.append("PUSH  DX")
+        return True
+    elif tetrad[0] == 'begin_t':
+        ANS.append("assume  cs:code")
+        ANS.append("code    segment")
+        ANS.append("MOV  AX,  123BH")
+        ANS.append("MOV  DS,   AX")
+        ANS.append("MOV  AX,  1000H")
+        ANS.append("MOV  SS,  AX")
+        ANS.append("MOV  SP,  0010H")
+        if_main.append(1)
+        order_quantity = order_quantity + 7
+    elif tetrad[0] == 'end':
+        ip = if_main.pop()
+        if ip == 0:
+            name = function_name.pop()
+            ANS.append("ret")
+            ANS.append(name + " endp")
+            order_quantity = order_quantity + 2
+        else:
+            ANS.append("MOV AX, 4C00H")
+            ANS.append("INT 21H")
+            ANS.append("code ends")
+            ANS.append("end")
+            order_quantity = order_quantity + 4
+
+        return False
+    elif tetrad[0] == "return":
+        ANS.append("ret")
+        order_quantity = order_quantity + 1
+        return True
+    elif tetrad[0] == ' ' and tetrad[3] in data_type:
+        RDL['M*'].append(tetrad[1])
+
+
+    elif tetrad[0] == "main":
+        return False
+    else:
+        print("未设计")
+        print(tetrad)
+        sys.exit(0)
+
+    # 开始进行if--返填动作
+    if len(goto_state) > 1:
+        num_first = goto_state.popleft()
+        num_second = goto_state.popleft()
+        if num_first < num_second and order_quantity > 0:
+            if num_second == 2:
+                goto_state.appendleft(num_second)
+            mark = str(len(f_count)) + 'f'
+            f_count.append(mark)
+            if order_quantity == 0:
+                print(tetrad)
+                print(RDL)
+                print(seg5)
+                print('fuck you ')
+                sys.exit(0)
+            ANS[len(ANS) - order_quantity] = mark + ' ' + ANS[len(ANS) - order_quantity] + ' ' + str(
+                order_quantity)
+            mark1 = if_stack.popleft()
+            ANS[mark1] = ANS[mark1] + mark
+        else:
+            goto_state.appendleft(num_second)
+            goto_state.appendleft(num_first)
+        # while 回填创建标号部分
+    if len(goto_state1) > 0:
+        h1 = goto_state1.popleft()
+        if h1 == 3:
+            new_name = str(len(f_count)) + 'f'
+            f_count.append(new_name)
+            ANS[len(ANS) - order_quantity] = new_name + " " + ANS[len(ANS) - order_quantity]
+            mmp = while_stack.popleft()
+            ANS[mmp] = ANS[mmp] + new_name
+        elif h1 == 1 and switch_wh == 0:
+            new_name = str(len(f_count)) + 'f'
+            f_count.append(new_name)
+            ANS[len(ANS) - order_quantity] = new_name + " " + ANS[len(ANS) - order_quantity]
+            # print("fuck")
+            while_stack.append(new_name)
+            # mmp = while_stack.popleft()
+            # ANS[mmp] = ANS[mmp] + new_name
+            # ANS[while_stack.popleft()] = new_name + " " + ANS[while_stack.popleft()]
+        else:
+            goto_state1.appendleft(h1)
+    order_quantity = 0
+    return True
+
+
+# 处理每个基本快内
+
+
+def final(team):
+    h = ' '
+    for boy in range(0, len(team)):
+        if boy == len(team) - 1:
+            h = mak_assemble(team[boy])
+        else:
+            mak_assemble(team[boy])
+
+    if h:
+        for jk in RDL.keys():
+            if jk != "M*" and RDL[jk] != 'null':
+                if seg5[RDL[jk]] != 'n' and seg5[RDL[jk]] != 0 and RDL[jk] not in RDL['M*']:
+                    ANS.append("ST " + register_list[jk] + ', ' + getsym.get_pos(RDL[jk]))
+                    RDL['M*'].append(RDL[jk])
+                    RDL[jk] = 'null'
+                elif seg5[RDL[jk]] == 'n':
+                    RDL[jk] = 'null'
+    '''
+    for ppp in RDL['M*']:
+        if re.match(r'^[0-9]+t$', ppp):
+            RDL['M*'].remove(ppp)
+'''
+
+
+'''
+for i in range(5, 8):
+    n = get_names(QT[i])
+    print(n)
+    m = is_active_plus(n, QT[i])
+    print(QT[i])
+    final(QT[i])
+
+for i in ANS:
+    print(i)
+'''
+for h in QT:
+    n =get_names(h)
+    m = is_active_plus(n ,h)
+    final(h)
+
+with open("code.asm", mode='w+') as file:
+    for i in ANS:
+        file.write(i + '\n')
+
+

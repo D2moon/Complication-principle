@@ -15,7 +15,7 @@
 if语句 		ifyj        w6
 while语句 	whileyj     w7
 return语句  returnyj     w8
-赋值语句 	fzyj        w9
+赋值调用语句 fzyj        w9
 表达式 		bds         r1
 加法表达式 	jfbds       r2
 项 			x           r3
@@ -26,7 +26,6 @@ call  		call        r6
 实参列表 	sclb        r8
 relop       relop       r9
 数字		sz          sz
-
 运算符       + -         ss1
             * /         ss2
 

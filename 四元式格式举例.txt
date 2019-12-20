@@ -6,41 +6,81 @@ class Node:                 #四元式类
         self.type = ''
 
 
-函数：
-<返回类型，参数1，参数2，函数名>
+函数声明:
 <op, t1, t2, type>
 例如：<main, a, b, int>
-同名连续函数四元式表示统一函数
+同名连续函数四元式表示同一函数
 
-声明：
-<数据类型，变量名， ， >
-<int, t1, , >
+函数调用:
+<op, t1, t2, type>
+sum(a, b)
+<sum, a, b, 1t>
+同名连续函数四元式表示调用同一函数
+如：
+sum(a, b, c)
+<sum, a, b, 1t>
+<sum, c,  , 1t>
 
-赋值语句:
-<变量1，=，变量2， >
-<t1, =, t2, >
-t1 = t2;
 
-四则运算：
-<变量1，运算符，变量2，变量3>
-<t1, *, t2, t3>
-t1 = t2*t3;
+声明P:
+<op, t1, t2, type>
+int h;
+< , h, , int>
+
+运算语句:
+<op, t1, t2, type>
+a*b
+<*, a, b, 1t>
+
+赋值:
+<op, t1, t2, type>
+b = a;
+<=, a, , b>
+
+
 
 if语句:
-<if，res(E)， ， >      E为真跳转
+<op, t1, t2, type>
+if(a > b) {
+
+}
+else {
+
+}
+<>, a, b, 1t>
+<if，1t， ， >      E为假跳转
 <el， ， ， >
 <ie， ， ， >
 
+
+
 while语句:
-<wh， ， ， >			when语句开始
-quat(E1)				判断条件
-<do，res(E)， ， >		跳置E2
-quat(E2)
-<we， ， ， >			跳回E1
+<op, t1, t2, type>
+while(c > d) {
+
+
+}
+<while, , , >			    while语句开始
+<>, c, d, 1t>				判断条件
+<do, , , 1t>		        为假时跳转
+<we， ， ， >			    跳回E1
 
 
 return语句:
-<re，res(E)， ， >   	返回res(E)的值
+<op, t1, t2, type>
+return a+10;
+<+, a, 10, 1t>
+<return, , ,1t>   	返回res(E)的值
+
+
+主函数起点:
+<begin_t, , , >
+
+函数起始点:
+<begin, , , >
+
+函数终点:
+<end, , , >
 
 
 

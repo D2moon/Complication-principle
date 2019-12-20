@@ -26,7 +26,7 @@ cons4->!
 w5->w6
 w5->w7
 w5->w8
-w5->w9
+w5->id w9
 w6->if ( r1 ) w1 cons5
 cons5->!
 cons5->else w1
@@ -34,7 +34,8 @@ w7->while ( r1 ) w1
 w8->return cons6 ;
 cons6->!
 cons6->r1
-w9->id = r1 ;
+w9->= r1 ;
+w9->r6 ;
 r1->r2 cons7
 cons7->!
 cons7->r9 r2

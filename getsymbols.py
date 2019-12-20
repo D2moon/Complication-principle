@@ -8,6 +8,7 @@ Map = lexicalpro.mapa
 List1 = []  # 处理声明语句
 Get = []  # 存入最终四元式
 Pick = []  # 进行语法分析
+Stack = []  # 符号表处理栈，存储活动记录
 
 Len = {'int': 2, 'float': 8, 'double': 8, 'char': 1, 'bool': 1}  # 长度表
 

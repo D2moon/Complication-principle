@@ -31,10 +31,7 @@ def main():
             break
         t1 = Mapa[pick[i]]
         ne = Dirt[stack[-1]][t1]
-
         if not ne:
-            print(stack[-1], end=' ')
-            print(pick[i])
             flag = False
             break
         stack.pop()
