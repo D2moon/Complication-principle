@@ -22,16 +22,16 @@ def divide(a):
         for j in range(0, 4):
             if a[i][j] == '':
                 a[i][j] = ' '
-            elif a[i][j].replace('.', '', 1).isdigit():
-                a[i][j] = int(a[i][j])
-        if a[i][0] == 'gt' or a[i][0] == 'if' or a[i][0] == 'do' or a[i][0] == 'end' or a[i][0] == 'else' or\
+            # elif a[i][j].replace('.', '', 1).isdigit():
+            #     a[i][j] = int(a[i][j])
+        if a[i][0] == 'if' or a[i][0] == 'do' or a[i][0] == 'end' or a[i][0] == 'el' or\
                 a[i][0] == 'return' or a[i][0] == 'we':
             # print(a[i])
             part.append(a[i])
             # print('divide over')
             part.append('divide over')
 
-        elif a[i][0] == 'ie' or a[i][0] == 'while':
+        elif a[i][0] == 'ie' or a[i][0] == 'wh':
             # print('divide over')
             part.append('divide over')
             # print(a[i])
@@ -58,7 +58,7 @@ def main():
     solve_pro()
     divide(a)
     block_into_list(part)
-    #print(final)
+    print(final)
     f = open('outpro.txt', 'wb')
     pickle.dump(final, f)
 

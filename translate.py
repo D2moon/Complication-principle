@@ -177,9 +177,18 @@ def solve():
     flag = False
     ss1 = ''
     ss2 = ''
+    tip = 0
     while i < len(Pick):
         now = stack[-1]
         tt1 = Mapa[Pick[i].type]
+        # print(now, end=' ')
+        # print(Pick[i].type, end=' ')
+        # print(i)
+        if i == 16:
+            if tip > 15:
+                break
+            else:
+                tip = tip+1
         if flag:
             if now == 'mm7':
                 flag = False

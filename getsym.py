@@ -180,12 +180,12 @@ def solve_pro():
             Han_tol.han[-1].len = Han_tol.han[-1].num * 2
             Han_tol.han[-1].en = i - 1
         elif Get[i].op == 'return':
-            Map1[idl] = Get[i].type
+            Map1[idl] = get_st(Len['int'])
     Han_tol.todo()
 
 
 def find_re(now):
-    return get_pos(Map1[now])
+    return Map1[now]
 
 
 def solve(now):

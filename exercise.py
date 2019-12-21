@@ -1,8 +1,9 @@
-import pickle
-a = [[1], [2, 3]]
-# f = open('output.txt', 'wb')
-# pickle.dump(a, f)
-
-f = open('outpro.txt', 'rb')
-data = pickle.load(f)
-print(data)
+from queue import Queue
+pq = Queue(maxsize=10000)
+pq.put(1)
+print(pq.qsize())
+pq.put(2)
+t1 = pq.get()
+print(t1)
+t2 = pq.get()
+print(t2)

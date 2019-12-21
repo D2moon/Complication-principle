@@ -1,11 +1,11 @@
 int main()
 {
+    int a;
     int b;
     int c;
-    c = 5;
-    b = 0;
-    while(c <= 10)
-    {
-        b = 3+1;
-    }
+    a = 100;
+    b = 10;
+    c = 20;
+    if(c > 1) {b = 1000;}
+    a = b*2;
 }
