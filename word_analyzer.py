@@ -77,6 +77,10 @@ def todo():  # 整活
         i = 0
         while i < lens:
             if line[i] == '\n':
+                if strs != '':
+                    addtoi_word(strs)
+                    strs = ''
+            if line[i] == '\n':
                 i += 1
                 continue
             if line[i] == '\"' and state == 0:  # 字符串开始
@@ -113,13 +117,13 @@ def todo():  # 整活
                 i += 1
                 break
             if line[i] >= '0' and line[i] <= '9':  # 判断数字
-                addtoi_word(strs)
-                strs = ''
                 strc = strc + line[i]
                 i = i + 1
                 statec = 0  # 小数点标识符
                 while i < len(line) and ((line[i] <= '9' and line[i] >= '0') or line[i] == '.'):
                     if (line[i] == '.' and statec == 0):
+                        print('sorry, 暂时没有浮点数')
+                        break
                         statec = 1
                         strc = strc + line[i]
                     elif line[i] <= '9' and line[i] >= '0':
@@ -128,9 +132,11 @@ def todo():  # 整活
                         break
                     i = i + 1
                 i = i - 1
-
-                addtoi_word(strs)
-                strs=''
+                if strs != '':
+                    strs = strs + strc
+                    strc = ''
+                    i += 1
+                    continue
                 if not (strc in c_word):
                     numc = numc + 1
                     c_word[strc] = numc
@@ -172,6 +178,7 @@ def todo():  # 整活
                 strs = strs + line[i]
                 i += 1
         addtoi_word(strs)
+
     f.close()
 
 

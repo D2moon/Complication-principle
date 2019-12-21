@@ -29,5 +29,9 @@ relop       relop       r9
 运算符       + -         ss1
             * /         ss2
 
+
+变量定义                 m1
+
+
 中间结果：
 cons1 ~ cons20

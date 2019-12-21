@@ -17,7 +17,7 @@ def judge(s1):
 
 
 # mea = input('请输入开启文件位置 :')  # 文法输入文件
-mea = 'grammar2.txt'
+mea = 'grammar1.txt'
 with open(mea, mode='r', encoding='UTF-8', errors='ignore') as fuck:
     list1 = fuck.readlines()
 len1 = len(list1)
