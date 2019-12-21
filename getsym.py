@@ -14,9 +14,8 @@ def get_st(lens):
     global pos
     pp = pos
     pos = pos + lens
-    p1 = hex(pp)
-    p1 = str(p1)
-    p1 = '[' + p1
+    pp = str(pp)
+    p1 = 'DS:[' + pp
     p1 = p1 + ']'
     return p1
 
@@ -140,11 +139,13 @@ def solve_pro():
     global idl
     for i in range(0, t_tol):
         new = Sym()
-        idl = str(t_tol)+'t'
+        idl = str(i)+'t'
+        print(idl)
         new.name = idl
         new.type = 'int'
         new.add('int')
         Sym_tol.add(new)
+        idl = ''
     flag = False
     for i in range(0, len(Get)):
         if Get[i].op == '' and Get[i].type == 'int':

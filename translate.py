@@ -91,6 +91,9 @@ def call():
 
 
 def todo():
+    # for i in range(0, len(Bds[-1])):
+    #     print(Bds[-1][i].val, end=' ')
+    # print('')
     if len(Bds[-1]) == 0:
         return ''
     if len(Bds[-1]) == 1:
@@ -201,11 +204,11 @@ def solve():
                 stack.pop()
                 if opt == 'while':
                     tot.op = 'do'
-                    tot.type = to.type
+                    tot.t1 = to.type
                     Get.append(tot)
                 elif opt == 'if':
                     tot.op = 'if'
-                    tot.type = to.type
+                    tot.t1 = to.type
                     Get.append(tot)
             elif now == 'mm11':
                 flag = False
@@ -242,6 +245,8 @@ def solve():
                 mt = Ed()
                 mt.val = lt
                 mt.type = 'id'
+                # print(mt.val, end='bbb')
+                # print('')
                 Bds[-1].append(mt)
                 stack.pop()
             elif now == 'kk2':
@@ -281,7 +286,10 @@ def solve():
                         while i < len(Pick) - 1 and stack[-1] == Pick[i].type:
                             if Pick[i].type == 'id':
                                 id1 = Pick[i].val
-                            Bds[-1].append(Pick[i])
+                            # print(Pick[i].val, end='aaa')
+                            # print('')
+                            if Pick[i].val != '=':
+                                Bds[-1].append(Pick[i])
                             i += 1
                             stack.pop()
         elif now == 'mm2' or now == 'mm5':
@@ -310,7 +318,7 @@ def solve():
             stack.pop()
         elif now == 'mm14':
             to = Node()
-            to.op = 'else'
+            to.op = 'el'
             Get.append(to)
             stack.pop()
         elif now == 'mm15':
@@ -384,7 +392,7 @@ def solve():
                     while i < len(Pick) - 1 and stack[-1] == Pick[i].type:
                         if Pick[i].val == 'while':
                             tot = Node()
-                            tot.op = 'while'
+                            tot.op = 'wh'
                             Get.append(tot)
                             opt = 'while'
                         elif Pick[i].val == 'if':

@@ -60,9 +60,9 @@ while(c > d) {
 
 
 }
-<while, , , >			    while语句开始
+<wh, , , >			    while语句开始
 <>, c, d, 1t>				判断条件
-<do, , , 1t>		        为假时跳转
+<do, 1t, , >		        为假时跳转
 <we， ， ， >			    跳回E1
 
 

@@ -4,8 +4,8 @@ import sys  # 停止程序暂停模块
 import pickle
 from collections import deque  # 队列区域
 import getsym
-getsym.main()
 
+getsym.main()
 
 f = open('outpro.txt', 'rb')
 QT = pickle.load(f)
@@ -61,9 +61,10 @@ print(QT)
 # RDL = {'R`': 'null', 'M*': ['a', 'b', 'c', 'x']}
 RDL = {'R0`': 'null', 'R1`': 'null', 'R2`': 'null', "M*": []}
 ANS = []  # 汇编代码生成存储部分
-operator = {"*", "+", "-", "/", '>', '<', '>=', '<=', '!='}
-operator1 = {"*": 'MUL', '/': 'DIV', '+': 'ADD', '-': 'SUB',
-             '>': 'GT', '<': 'LT', '>=': 'GE', '<=': 'LE', '!=': 'NE', '==': 'EQ'}
+operator = {"*", "+", "-", "/"}
+operator1 = {"*": 'MUL', '/': 'DIV', '+': 'ADD', '-': 'SUB'}
+operator2 = {'>', '<', '>=', '<=', '!=', '=='}
+operator3 = {'>': 'JBE', '<': 'JAE', '>=': 'JB', '<=': 'JA', '!=': 'JE', '==': 'JNE'}
 # 特别用例seg4——仿造状态表
 seg4 = {}
 # 用于存储最新状态
@@ -92,13 +93,15 @@ num_instructions = 0
 register_list = {"R0`": "BX", 'R1`': "CX", "R2`": "DX"}
 # 数据类型
 data_type = ['int', 'float']
+
+
 # 从符号表中单独读取 出所有变量名称
 
 
 def get_names(table):
     SEQ1 = []
     for i_nan in table:
-        if i_nan[0] in operator or i_nan[0] == '=':
+        if i_nan[0] in operator or i_nan[0] == '=' or i_nan[0] in operator2:
             for k in range(1, 4):
                 if SEQ1.count(i_nan[k]) == 0 and type(i_nan[k]) == str and i_nan[k] != " ":
                     SEQ1.append(i_nan[k])
@@ -125,7 +128,7 @@ def is_active_plus(seg1, seg2):
 
     # print(seg3)
     while num >= 0:
-        if seg2[num][0] in operator or seg2[num][0] == '=':
+        if seg2[num][0] in operator or seg2[num][0] == '=' or  seg2[num][0] in operator2:
             no = 3
             while no >= 0:
                 if seg2[num][no] in seg3.keys():
@@ -206,13 +209,13 @@ def getR(Q, r_add, b_add, c_add):
             state2 = 0
             for j in RDL.keys():
                 if RDL[j] == "null" and Q[0] != '=':
-                    ANS.append("ST " + register_list[i] + ", " + register_list[j])
+                    ANS.append("MOV " + register_list[j] + ", " + register_list[i])
                     order_quantity = order_quantity + 1
                     RDL[j] = name
                     state2 = 1
                     break
             if state2 == 0:
-                ANS.append("ST " + register_list[i] + ", " + getsym.get_pos(name))
+                ANS.append("MOV " + getsym.get_pos(name) + ", " + register_list[i])
                 order_quantity = order_quantity + 1
                 RDL['M*'].append(name)
         r_add = location(i)
@@ -265,7 +268,7 @@ def getR(Q, r_add, b_add, c_add):
                 r_add = location(ik)
                 if RDL[r_add] in list(Q[2].keys()) and RDL[r_add] not in RDL["M*"]:
                     h_name = getsym.get_pos(RDL[r_add])
-                    ANS.append("ST " + register_list[r_add] + ', ' + h_name)
+                    ANS.append("MOV " + h_name + ', ' + register_list[r_add])
                     order_quantity = order_quantity + 1
                     RDL['M*'].append(RDL[ik])
                 RDL[ik] = "null"
@@ -279,7 +282,7 @@ def getR(Q, r_add, b_add, c_add):
                 grade2 = seg5[RDL[ik]]
                 r_add = location(ik)
         if RDL[r_add] not in RDL['M*']:
-            ANS.append("ST" + register_list[r_add] + ', ' + getsym.get_pos(RDL[r_add]))
+            ANS.append("MOV " + getsym.get_pos(RDL[r_add]) + ', ' + register_list[r_add])
             order_quantity = order_quantity + 1
             ['M*'].append(RDL[r_add])
         RDL[r_add] = "null"
@@ -328,7 +331,7 @@ def getR(Q, r_add, b_add, c_add):
                 register = name
                 grade = RDL[register]
             if grade not in RDL['M*'] and grade != "null" and state3 != 1:
-                ANS.append("ST " + register_list[register] + ", " + getsym.get_pos(grade))
+                ANS.append("MOV " + getsym.get_pos(grade) + ", " + register_list[register])
                 order_quantity = order_quantity + 1
                 RDL['M*'].append(grade)
             r_add = location(register)
@@ -353,9 +356,9 @@ def mak_assemble(tetrad):
     switch_wh = 0
     global order_quantity
     global num_instructions
-    if tetrad [0] == 'end':
+    if tetrad[0] == 'end':
         for jk in RDL.keys():
-            if jk != "M*" and RDL[jk] != 'null' :
+            if jk != "M*" and RDL[jk] != 'null':
                 if seg5[RDL[jk]] != 'n' and seg5[RDL[jk]] != 0 and RDL[jk] not in RDL['M*']:
                     print(seg5)
                     print(QT)
@@ -363,7 +366,7 @@ def mak_assemble(tetrad):
                     if type(h) != str:
                         print(h)
                         sys.exit(0)
-                    ANS.append("ST " + register_list[jk] + ', ' + h)
+                    ANS.append("MOV " + h + ', ' + register_list[jk] )
                     RDL['M*'].append(RDL[jk])
                     RDL[jk] = 'null'
                 elif seg5[RDL[jk]] == 'n':
@@ -395,25 +398,22 @@ def mak_assemble(tetrad):
                 sys.exit(0)
         if address[0] != address[1]:
             h_name = address[1]
-
             if not h_name.isdigit():
                 h_name = getsym.get_pos(h_name)
             else:
-                h_name = hex(int(h_name)) +"H"
-                print(h_name)
+                h_name = num_change(hex(int(h_name))) + "H"
 
             if address[0] not in register_list.keys():
-                    print(address[0])
-                    sys.exit(0)
+                print(address[0])
+                sys.exit(0)
             if not h_name:
                 print(address[1])
                 sys.exit(0)
             if type(register_list[address[0]]) != str or type(h_name) != str:
-
                 print(register_list[address[0]])
                 print(h_name)
                 sys.exit(0)
-            ANS.append("LD " + register_list[address[0]] + ", " + h_name)
+            ANS.append("MOV " + register_list[address[0]] + ", " + h_name)
             order_quantity = order_quantity + 1
         mm = list(tetrad[3].keys())
         if mm[0] in RDL['M*']:
@@ -427,10 +427,10 @@ def mak_assemble(tetrad):
         if address[0] != address[1]:
             if not address[1].isdigit():
                 h_name = getsym.get_pos(address[1])
-                ANS.append("LD " + register_list[address[0]] + ", " + h_name)
+                ANS.append("MOV " + register_list[address[0]] + ", " + h_name)
             else:
-                h_name = hex(int(address[1])) + "H"
-                ANS.append("LD " + register_list[address[0]] + ", " + h_name)
+                h_name = num_change(hex(int(address[1]))) + "H"
+                ANS.append("MOV " + register_list[address[0]] + ", " + h_name)
             order_quantity = order_quantity + 1
         op = operator1[tetrad[0]]
         if op == "MUL" or op == "DIV":
@@ -439,7 +439,7 @@ def mak_assemble(tetrad):
                 h_name = getsym.get_pos(address[2])
                 ANS.append(op + " " + h_name)
             else:
-                h_name = hex(int(address[2])) + "H"
+                h_name = num_change(hex(int(address[2]))) + "H"
                 ANS.append(op + ' ' + h_name)
             order_quantity = order_quantity + 2
         else:
@@ -447,7 +447,7 @@ def mak_assemble(tetrad):
             if not h_name.isdigit():
                 h_name = getsym.get_pos(h_name)
             else:
-                h_name = hex(int(h_name)) + "H"
+                h_name = num_change(hex(int(h_name))) + "H"
             ANS.append(op + ' ' + register_list[address[0]] + ', ' + h_name)
             order_quantity = order_quantity + 1
         mm = list(tetrad[3].keys())
@@ -458,17 +458,20 @@ def mak_assemble(tetrad):
                 RDL[j] = 'null'
         RDL[address[0]] = mm[0]
     elif tetrad[0] == 'if':
+        '''
         address = getR(tetrad, R_add, B_add, C_add)
         h_name = address[1]
         if re.match(r'R[0-3]+`', h_name):
             h_name = register_list[h_name]
         else:
+            print(h_name)
             h_name = getsym.get_pos(h_name)
         # 相应的值放入AX
         ANS.append("MOV AX, " + h_name)
         order_quantity = order_quantity + 1
         ANS.append("JZ ")
         order_quantity = order_quantity + 1
+        '''
         goto_state.append(1)
         if_stack.append(len(ANS) - 1)
     elif tetrad[0] == 'el':  # 此处为无条件跳转
@@ -476,7 +479,7 @@ def mak_assemble(tetrad):
             if jk != "M*" and RDL[jk] != 'null':
                 if seg5[RDL[jk]] != 'n' and seg5[RDL[jk]] != 0 and RDL[jk] not in RDL['M*']:
                     h_name = getsym.get_pos(RDL[jk])
-                    ANS.append("ST " + register_list[jk] + ', ' + h_name)
+                    ANS.append("MOV " + h_name + ', ' + register_list[jk])
                     order_quantity = order_quantity + 1
                     RDL['M*'].append(RDL[jk])
                     RDL[jk] = 'null'
@@ -489,16 +492,17 @@ def mak_assemble(tetrad):
         for t_name in RDL.keys():
             if t_name != 'M*' and RDL[t_name] in seg5 and seg5[RDL[t_name]] != 'n' \
                     and seg5[RDL[t_name]] != 0 and RDL[t_name] not in RDL['M*']:
-                ANS.append("ST " + register_list[t_name] + ', ' + getsym.get_pos(RDL[t_name]))
+                ANS.append("MOV " + getsym.get_pos(RDL[t_name]) + ', ' + register_list[t_name])
         goto_state.append(3)
         return True  # 这个true  就返回的很有灵性，需要好好仔细研究一下
     elif tetrad[0] == 'wh':
         goto_state1.append(1)
         switch_wh = 1
     elif tetrad[0] == 'do':
+        '''
         address = getR(tetrad, R_add, B_add, C_add)
         h_name = address[1]
-        if re.match(r'R[0-3]+`',h_name):
+        if re.match(r'R[0-3]+`', h_name):
             h_name = register_list[h_name]
         else:
             h_name = getsym.get_pos(h_name)
@@ -506,14 +510,16 @@ def mak_assemble(tetrad):
         ANS.append("MOV AX, " + h_name)
         order_quantity = order_quantity + 1
         ANS.append("JZ ")
-        while_stack.append(len(ANS) - 1)
         order_quantity = order_quantity + 1
+        '''
+        while_stack.append(len(ANS) - 1)
+
         return True
     elif tetrad[0] == 'we':
         for jk in RDL.keys():
             if jk != "M*" and RDL[jk] != 'null':
                 if seg5[RDL[jk]] != 'n' and seg5[RDL[jk]] != 0 and RDL[jk] not in RDL['M*']:
-                    ANS.append("ST " + register_list[jk] + ', ' + getsym.get_pos(RDL[jk]))
+                    ANS.append("MOV " + getsym.get_pos(RDL[jk]) + ', ' + register_list[jk])
                     RDL['M*'].append(RDL[jk])
                     RDL[jk] = 'null'
                 elif seg5[RDL[jk]] == 'n':
@@ -580,10 +586,47 @@ def mak_assemble(tetrad):
         return True
     elif tetrad[0] == ' ' and tetrad[3] in data_type:
         RDL['M*'].append(tetrad[1])
-
-
     elif tetrad[0] == "main":
         return False
+    elif tetrad[0] in operator2:
+        address = getR(tetrad, R_add, B_add, C_add)
+        if address[0] != address[1]:
+            if not address[1].isdigit():
+                h_name = getsym.get_pos(address[1])
+                ANS.append("MOV " + register_list[address[0]] + ", " + h_name)
+            else:
+                h_name = num_change(hex(int(address[1]))) + "H"
+                ANS.append("MOV " + register_list[address[0]] + ", " + h_name)
+            order_quantity = order_quantity + 1
+        '''
+        op = operator1[tetrad[0]]
+        if op == "MUL" or op == "DIV":
+            ANS.append("MOV AX," + register_list[address[0]])
+            if not address[2].isdigit():
+                h_name = getsym.get_pos(address[2])
+                ANS.append(op + " " + h_name)
+            else:
+                h_name = num_change(hex(int(address[2]))) + "H"
+                ANS.append(op + ' ' + h_name)
+            order_quantity = order_quantity + 2
+        else:
+        '''
+        h_name = address[2]
+        if not h_name.isdigit():
+            h_name = getsym.get_pos(h_name)
+        else:
+            h_name = num_change(hex(int(h_name))) + "H"
+        ANS.append('CMP ' + register_list[address[0]] + ', ' + h_name)
+        ANS.append(operator3[tetrad[0]]+' ')
+        order_quantity = order_quantity + 2
+        print(tetrad)
+        mm = list(tetrad[3].keys())
+        if mm[0] in RDL['M*']:
+            RDL['M*'].remove(mm[0])
+        for j in RDL:
+            if j != 'M*' and RDL[j] == mm[0]:
+                RDL[j] = 'null'
+        RDL[address[0]] = mm[0]
     else:
         print("未设计")
         print(tetrad)
@@ -596,7 +639,7 @@ def mak_assemble(tetrad):
         if num_first < num_second and order_quantity > 0:
             if num_second == 2:
                 goto_state.appendleft(num_second)
-            mark = str(len(f_count)) + 'f'
+            mark = 's' + str(len(f_count)) + 'f'
             f_count.append(mark)
             if order_quantity == 0:
                 print(tetrad)
@@ -604,8 +647,7 @@ def mak_assemble(tetrad):
                 print(seg5)
                 print('fuck you ')
                 sys.exit(0)
-            ANS[len(ANS) - order_quantity] = mark + ' ' + ANS[len(ANS) - order_quantity] + ' ' + str(
-                order_quantity)
+            ANS[len(ANS) - order_quantity] =mark + ': ' + ANS[len(ANS) - order_quantity]
             mark1 = if_stack.popleft()
             ANS[mark1] = ANS[mark1] + mark
         else:
@@ -617,13 +659,13 @@ def mak_assemble(tetrad):
         if h1 == 3:
             new_name = str(len(f_count)) + 'f'
             f_count.append(new_name)
-            ANS[len(ANS) - order_quantity] = new_name + " " + ANS[len(ANS) - order_quantity]
+            ANS[len(ANS) - order_quantity] = new_name + ": " + ANS[len(ANS) - order_quantity]
             mmp = while_stack.popleft()
             ANS[mmp] = ANS[mmp] + new_name
         elif h1 == 1 and switch_wh == 0:
-            new_name = str(len(f_count)) + 'f'
+            new_name = 's' + str(len(f_count)) + 'f'
             f_count.append(new_name)
-            ANS[len(ANS) - order_quantity] = new_name + " " + ANS[len(ANS) - order_quantity]
+            ANS[len(ANS) - order_quantity] = new_name + ": " + ANS[len(ANS) - order_quantity]
             # print("fuck")
             while_stack.append(new_name)
             # mmp = while_stack.popleft()
@@ -639,18 +681,17 @@ def mak_assemble(tetrad):
 
 
 def final(team):
-    h = ' '
     for boy in range(0, len(team)):
         if boy == len(team) - 1:
-            h = mak_assemble(team[boy])
+            h_state = mak_assemble(team[boy])
         else:
             mak_assemble(team[boy])
 
-    if h:
+    if h_state:
         for jk in RDL.keys():
             if jk != "M*" and RDL[jk] != 'null':
                 if seg5[RDL[jk]] != 'n' and seg5[RDL[jk]] != 0 and RDL[jk] not in RDL['M*']:
-                    ANS.append("ST " + register_list[jk] + ', ' + getsym.get_pos(RDL[jk]))
+                    ANS.append("MOV " + getsym.get_pos(RDL[jk]) + ', ' + register_list[jk])
                     RDL['M*'].append(RDL[jk])
                     RDL[jk] = 'null'
                 elif seg5[RDL[jk]] == 'n':
@@ -660,6 +701,21 @@ def final(team):
         if re.match(r'^[0-9]+t$', ppp):
             RDL['M*'].remove(ppp)
 '''
+
+
+# 数字转换函数
+
+
+def num_change(number):
+    number = number[2:]
+    if len(number) > 2:
+        print("数据越界，无法计算")
+        print(number)
+        sys.exit(0)
+    if not number[0].isdigit() or len(number) < 2:
+        number = '0' + number
+
+    return number
 
 
 '''
@@ -674,12 +730,10 @@ for i in ANS:
     print(i)
 '''
 for h in QT:
-    n =get_names(h)
-    m = is_active_plus(n ,h)
+    n = get_names(h)
+    m = is_active_plus(n, h)
     final(h)
 
 with open("code.asm", mode='w+') as file:
     for i in ANS:
         file.write(i + '\n')
-
-
