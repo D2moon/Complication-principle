@@ -31,6 +31,11 @@ relop       relop       r9
 
 
 变量定义                 m1
+<for语句>               m2
+<for1>                  m3
+<for2>                  m4
+<for3>                  m5
+<fors>                  m6
 
 
 中间结果：

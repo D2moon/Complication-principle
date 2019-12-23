@@ -16,8 +16,8 @@ def judge(s1):
             unterminal.append(s1)
 
 
-# mea = input('请输入开启文件位置 :')  # 文法输入文件
-mea = 'grammar1.txt'
+mea = input('请输入开启文件位置 :')  # 文法输入文件
+#mea = 'grammar1.txt'
 with open(mea, mode='r', encoding='UTF-8', errors='ignore') as fuck:
     list1 = fuck.readlines()
 len1 = len(list1)
@@ -26,7 +26,6 @@ for i in range(0, len1 - 1):
     ExpGrammar.append(list1[i][0:len2 - 1])
 ExpGrammar.append(list1[len1 - 1])
 
-# print(ExpGrammar)
 
 
 Grammar.append([])
@@ -181,6 +180,7 @@ def getFollow(word2):
                             break
                     if k == len(i) - 1 and ha != he:
                         fool.add("#")
+                        # print(ha)
                         fool = fool.union(fool, getFollow(ha))
     fool.discard('!')
     return fool
@@ -249,22 +249,3 @@ mapa = {}
 for i in range(0, len(Terminal)):
     mapa[Terminal[i]] = i
 
-
-'''
-#print(dirt['cons3'], end=' ')
-for i in range(0, len(terminal)):
-    print(dirt['cons3'][i], end=' ')
-    print(terminal[i])
-'''
-
-'''
-#  select集输出
-name2 = 'output.txt'     #name2=input("请输入存储位置:   ")
-with open(name2, mode='w') as fuck_you:
-    for i in ExpGrammar:
-        for j in getSele(i):
-            fuck_you.write(j+" ")
-        fuck_you.write("\n")
-
-fuck_you .close()
-'''

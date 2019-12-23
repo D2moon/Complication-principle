@@ -7,7 +7,6 @@ q2->void id q4
 q4->q5
 q4->q6
 q5->;
-q5->= sz ;
 q6->( q7 ) w1
 q7->q8
 q7->!

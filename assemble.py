@@ -11,55 +11,20 @@ f = open('outpro.txt', 'rb')
 QT = pickle.load(f)
 print(QT)
 #
-# QT = [
-#     [
-#         ['+', 'a', 'b', '1t'],
-#         ['-', 'c', 'd', '2t'],
-#         ['*', '1t', '2t', 'x'],
-#         ['=', 'a', ' ', 'y'],
-#         ['/', 'a', 'x', 'x'],
-#         ['+', 'x', '1t', 'x'],
-#         ['=', 'x', ' ', 'a']
-#
-#     ],
-#     [
-#         ['>', 'a', 'b', '1t'],
-#         ['if', '1t', ' ', ' ']
-#     ],
-#
-#     [
-#         ['+', 'a', 'b', '2t'],
-#         ['*', '2t', 'c', 'x'],
-#         ['el', ' ', ' ', ' ']
-#
-#     ],
-#     [
-#
-#         ['*', 'a', 'b', '3t'],
-#         ['-', 5, '3t', 'x']
-#     ],
-#     [
-#         ['ie', ' ', ' ', ' '],
-#         ['+', 'a', 'b', '1t']
-#     ],
-#     [
-#         ['wh', ' ', ' ', ' '],
-#         ['>', 'a', 'b', '1t'],
-#         ['do', '1t', ' ', ' ']
-#     ],
-#     [
-#         ['+', 'a', 'b', '2t'],
-#         ['*', '2t', 'c', 'x'],
-#         ['we', ' ', ' ', ' ']
-#     ],
-#     [
-#         ["+", "a", "b", "3t"]
-#     ]
-#
-# ]  # 算术四元组区
+'''
+QT = [
+        [['main', ' ', ' ', 'int'], ['begin_t', ' ', ' ', ' '], [' ', 'b', ' ', 'int'], [' ', 'c', ' ', 'int'],
+        ['=', 5, ' ', 'c'], ['=', 0, ' ', 'b'], ['>', 'c', 2, '1t'], ['if', '1t', ' ', ' ']],
+        [['!=', 'c', 'b', '2t'], ['if', '2t', ' ', ' ']],
+        [['+', 'c', 3, '3t']],
+        [['ie', ' ', ' ', ' '], ['=', 7, ' ', 'c']],
+        [['ie', ' ', ' ', ' '], ['*', 'b', 'c', '4t'], ['=', '4t', ' ', 'b'], ['end', ' ', ' ', ' ']]
+
+ ]  # 算术四元组区
+ '''
 # RDL = {'R0`': 'null', 'R1`': 'null', "M*": ['a', 'b', 'c', 'd']}  # 寄存器状态描述表  当前变量x值在该寄存器中
 # RDL = {'R`': 'null', 'M*': ['a', 'b', 'c', 'x']}
-RDL = {'R0`': 'null', 'R1`': 'null', 'R2`': 'null', "M*": []}
+RDL = {'R0`': 'null', 'R1`': 'null', "M*": []}
 ANS = []  # 汇编代码生成存储部分
 operator = {"*", "+", "-", "/"}
 operator1 = {"*": 'MUL', '/': 'DIV', '+': 'ADD', '-': 'SUB'}
@@ -71,10 +36,14 @@ seg4 = {}
 seg5 = {}
 # 用于标注跳转模式状态
 goto_state = deque()
-goto_state1 = deque()
+# goto_state1 =deque()
+switch_wh = 0
 # 存储if while 子函数标号的地址栈
 if_stack = deque()  # 放的是回填的位置
+delay_stack = []  # 延时栈
 while_stack = deque()  # 放的是回填内容和回填位置，会自动进行区分
+do_stack1 = []
+do_stack2 = []
 # 哈哈哈，绝了，神他妈两种思路
 # 跳转位置标号规则设置记录栈
 f_count = []
@@ -84,15 +53,18 @@ order_quantity = 0
 function_data_type = ["int", 'void']
 function_name = []
 # 四元式头值区分
-four_head = ["+", '-', '*', '/', 'return', 'wh', 'do', 'we', 'if', 'el', 'ie', ' begin', 'end']
+four_head = ["+", '-', '*', '/', 'return', 'wh', 'do', 'we', 'if', 'el', 'ie', 'begin', 'end', 'begin_t']
 # 主函数状态
 if_main = []
 # 指令数量
 num_instructions = 0
 # 寄存器对应
-register_list = {"R0`": "BX", 'R1`': "CX", "R2`": "DX"}
+register_list = {"R0`": "BX", 'R1`': "CX"}
 # 数据类型
 data_type = ['int', 'float']
+#
+function_name1 = ' '
+start = 0
 
 
 # 从符号表中单独读取 出所有变量名称
@@ -128,7 +100,7 @@ def is_active_plus(seg1, seg2):
 
     # print(seg3)
     while num >= 0:
-        if seg2[num][0] in operator or seg2[num][0] == '=' or  seg2[num][0] in operator2:
+        if seg2[num][0] in operator or seg2[num][0] == '=' or seg2[num][0] in operator2:
             no = 3
             while no >= 0:
                 if seg2[num][no] in seg3.keys():
@@ -147,9 +119,9 @@ def is_active_plus(seg1, seg2):
 
 
 def location(x):
-    if x == 'null' or type(x) == int:
-        # print("fuck")
-        sys.exit(0)
+    # if x == 'null' or type(x) == int:
+    # print("fuck")
+    # sys.exit(0)
     if re.match(r'^R[0-9]*`$', x):
         if RDL[x] == 'null':
             #  print(x + "此寄存器为空")
@@ -165,7 +137,7 @@ def location(x):
             # print(x + "已存于内存中")
             return x
         else:
-            # print(x + "所代表值并未存储，无法查址")
+            print(x + "所代表值并未存储，无法查址")
             return "null"
 
 
@@ -220,7 +192,7 @@ def getR(Q, r_add, b_add, c_add):
                 RDL['M*'].append(name)
         r_add = location(i)
         b_add = location(list(Q[1].keys())[0])
-        if Q[0] in operator and type(Q[2]) == dict:
+        if (Q[0] in operator or Q[0] in operator2) and type(Q[2]) == dict:
             c_add = location(list(Q[2].keys())[0])
         elif type(Q[2]) == int:
             c_add = str(Q[2])
@@ -296,7 +268,7 @@ def getR(Q, r_add, b_add, c_add):
             # print("选空闲者")
             r_add = location(i)
             b_add = location(list(Q[1].keys())[0])
-            if Q[0] in operator and type(Q[2]) == dict:
+            if (Q[0] in operator or Q[0] in operator2) and type(Q[2]) == dict:
                 c_add = location(list(Q[2].keys())[0])
             elif type(Q[2]) == int:
                 c_add = str(Q[2])
@@ -336,7 +308,7 @@ def getR(Q, r_add, b_add, c_add):
                 RDL['M*'].append(grade)
             r_add = location(register)
             b_add = location(list(Q[1].keys())[0])
-            if Q[0] in operator and type(Q[2]) == dict:
+            if (Q[0] in operator or Q[0] in operator2) and type(Q[2]) == dict:
                 c_add = location(list(Q[2].keys())[0])
             elif type(Q[2]) == int:
                 c_add = str(Q[2])
@@ -353,24 +325,27 @@ def mak_assemble(tetrad):
     R_add = ' '
     B_add = ' '
     C_add = ' '
-    switch_wh = 0
+    global switch_wh
+    global function_name1
     global order_quantity
     global num_instructions
+    global start
     if tetrad[0] == 'end':
         for jk in RDL.keys():
             if jk != "M*" and RDL[jk] != 'null':
                 if seg5[RDL[jk]] != 'n' and seg5[RDL[jk]] != 0 and RDL[jk] not in RDL['M*']:
-                    print(seg5)
-                    print(QT)
+                    # print(seg5)
+                    # print(QT)
                     h = getsym.get_pos(RDL[jk])
                     if type(h) != str:
                         print(h)
-                        sys.exit(0)
-                    ANS.append("MOV " + h + ', ' + register_list[jk] )
+                        sys.exit(-3)
+                    ANS.append("MOV " + h + ', ' + register_list[jk])
                     RDL['M*'].append(RDL[jk])
                     RDL[jk] = 'null'
                 elif seg5[RDL[jk]] == 'n':
                     RDL[jk] = 'null'
+
     getsym.solve(num_instructions)
     num_instructions = num_instructions + 1
     order_quantity = 0
@@ -388,6 +363,7 @@ def mak_assemble(tetrad):
 '''
     if tetrad[0] == '=':
         address = getR(tetrad, R_add, B_add, C_add)
+        '''
         for i in range(0, len(address)):
             # print(type(address[i]))
             if address[i] == "null":
@@ -396,6 +372,7 @@ def mak_assemble(tetrad):
                 print(ANS)
                 print(RDL)
                 sys.exit(0)
+        '''
         if address[0] != address[1]:
             h_name = address[1]
             if not h_name.isdigit():
@@ -405,16 +382,23 @@ def mak_assemble(tetrad):
 
             if address[0] not in register_list.keys():
                 print(address[0])
-                sys.exit(0)
+                sys.exit(-2)
             if not h_name:
                 print(address[1])
-                sys.exit(0)
+                print(address)
+                print(tetrad)
+                sys.exit(-1)
             if type(register_list[address[0]]) != str or type(h_name) != str:
                 print(register_list[address[0]])
                 print(h_name)
                 sys.exit(0)
             ANS.append("MOV " + register_list[address[0]] + ", " + h_name)
             order_quantity = order_quantity + 1
+        if tetrad == ['=', {'3t': 'n'}, ' ', {'c': 'y'}]:
+            print(order_quantity)
+            print(ANS[len(ANS) - 1])
+            print(RDL)
+
         mm = list(tetrad[3].keys())
         if mm[0] in RDL['M*']:
             RDL['M*'].remove(mm[0])
@@ -435,19 +419,34 @@ def mak_assemble(tetrad):
         op = operator1[tetrad[0]]
         if op == "MUL" or op == "DIV":
             ANS.append("MOV AX," + register_list[address[0]])
-            if not address[2].isdigit():
+            if not address[2].isdigit() and re.match(r'^R[0-9]+`', address[2]) is None:
                 h_name = getsym.get_pos(address[2])
                 ANS.append(op + " " + h_name)
+                order_quantity = order_quantity + 1
+            elif re.match(r'^R[0-9]+`', address[2]):
+                h_name = register_list[address[2]]
+                ANS.append(op + " " + h_name)
+                order_quantity = order_quantity+1
             else:
                 h_name = num_change(hex(int(address[2]))) + "H"
-                ANS.append(op + ' ' + h_name)
-            order_quantity = order_quantity + 2
+                ANS.append("MOV DX, " + h_name)
+                ANS.append(op + ' DX')
+                order_quantity = order_quantity + 2
+            h = getsym.get_pos(list(tetrad[3].keys())[0])
+            ANS.append("MOV " + h + ",AX")
+            print(RDL)
+            print(tetrad[3])
+            RDL['M*'].append(list(tetrad[3].keys())[0])
+
         else:
             h_name = address[2]
-            if not h_name.isdigit():
+            if not h_name.isdigit() and re.match(r'^R[0-9]+`$', h_name) is None:
                 h_name = getsym.get_pos(h_name)
+            elif re.match(r'^R[0-9]+`$', h_name):
+                h_name = register_list[h_name]
             else:
                 h_name = num_change(hex(int(h_name))) + "H"
+            print(tetrad)
             ANS.append(op + ' ' + register_list[address[0]] + ', ' + h_name)
             order_quantity = order_quantity + 1
         mm = list(tetrad[3].keys())
@@ -458,20 +457,6 @@ def mak_assemble(tetrad):
                 RDL[j] = 'null'
         RDL[address[0]] = mm[0]
     elif tetrad[0] == 'if':
-        '''
-        address = getR(tetrad, R_add, B_add, C_add)
-        h_name = address[1]
-        if re.match(r'R[0-3]+`', h_name):
-            h_name = register_list[h_name]
-        else:
-            print(h_name)
-            h_name = getsym.get_pos(h_name)
-        # 相应的值放入AX
-        ANS.append("MOV AX, " + h_name)
-        order_quantity = order_quantity + 1
-        ANS.append("JZ ")
-        order_quantity = order_quantity + 1
-        '''
         goto_state.append(1)
         if_stack.append(len(ANS) - 1)
     elif tetrad[0] == 'el':  # 此处为无条件跳转
@@ -483,8 +468,9 @@ def mak_assemble(tetrad):
                     order_quantity = order_quantity + 1
                     RDL['M*'].append(RDL[jk])
                     RDL[jk] = 'null'
-        ANS.append("JMP " + while_stack.popleft())
+        ANS.append("JMP ")
         order_quantity = order_quantity + 1
+        delay_stack.append(if_stack.pop())
         if_stack.append(len(ANS) - 1)
         goto_state.append(2)
         return False
@@ -494,26 +480,13 @@ def mak_assemble(tetrad):
                     and seg5[RDL[t_name]] != 0 and RDL[t_name] not in RDL['M*']:
                 ANS.append("MOV " + getsym.get_pos(RDL[t_name]) + ', ' + register_list[t_name])
         goto_state.append(3)
+        if len(if_stack) > 0:
+            delay_stack.append(if_stack.pop())
         return True  # 这个true  就返回的很有灵性，需要好好仔细研究一下
     elif tetrad[0] == 'wh':
-        goto_state1.append(1)
         switch_wh = 1
     elif tetrad[0] == 'do':
-        '''
-        address = getR(tetrad, R_add, B_add, C_add)
-        h_name = address[1]
-        if re.match(r'R[0-3]+`', h_name):
-            h_name = register_list[h_name]
-        else:
-            h_name = getsym.get_pos(h_name)
-        # 相应的值放入AX
-        ANS.append("MOV AX, " + h_name)
-        order_quantity = order_quantity + 1
-        ANS.append("JZ ")
-        order_quantity = order_quantity + 1
-        '''
-        while_stack.append(len(ANS) - 1)
-
+        do_stack1.append(len(ANS) - 1)
         return True
     elif tetrad[0] == 'we':
         for jk in RDL.keys():
@@ -525,37 +498,57 @@ def mak_assemble(tetrad):
                 elif seg5[RDL[jk]] == 'n':
                     RDL[jk] = 'null'
         # while  end  部分生成JMP部分
-        cat = while_stack.popleft()
+        print(while_stack)
+        print(ANS)
+        cat = while_stack.pop()
         if type(cat) == str:
             ANS.append("JMP " + cat)
+            order_quantity = order_quantity + 1
         else:
             print(cat)
-            # print(len(while_stack))
-            sys.exit(0)
+            print(ANS[len(ANS) - 1])
+            print(tetrad)
+            print(while_stack)
 
-        goto_state1.append(3)
-        while_stack.append(len(ANS) - 1)
+            # print(len(while_stack))
+            sys.exit(-1)
+        '''
+        if len(goto_state1) > 0:
+            h1 = goto_state1.popleft()
+            if h1 == 3:
+                new_name = 's' + str(len(f_count)) + 'f'
+                f_count.append(new_name)
+                ANS[len(ANS) - order_quantity] = new_name + ": " + ANS[len(ANS) - order_quantity]
+                mmp = while_stack.popleft()
+                ANS[mmp] = ANS[mmp] + new_name
+
+        '''
+        if len(do_stack1) > 0:
+            do_stack2.append(do_stack1.pop())
         return False
-    elif tetrad[0] not in four_head and type(tetrad) == str \
-            and tetrad not in function_data_type:
+    elif tetrad[0] not in four_head and type(tetrad[3]) == str \
+            and tetrad[3] not in function_data_type:
         ANS.append("CALL " + tetrad[0])
+        print(tetrad)
         m_name = getsym.find_re(tetrad[0])
         h_name = getsym.get_pos(tetrad[3])
-        ANS.append("MOV " + h_name + ', ' + m_name)
+        ANS.append("MOV " + 'AX, ' + m_name)
+        ANS.append("MOV " + h_name + ", AX")
+        RDL['M*'].append(tetrad[3])
+        print(RDL)
         order_quantity = order_quantity + 2
-    elif tetrad[0] not in four_head and tetrad[0] != 'main' and type(tetrad) == str \
-            and tetrad in function_data_type:
+    elif tetrad[0] not in four_head and tetrad[0] != 'main' and tetrad[0] != ' ' and type(tetrad[3]) == str \
+            and tetrad[3] in function_data_type:
+        print(tetrad)
         ANS.append(tetrad[0] + '  PROC NEAR')
         function_name.append(tetrad[0])
+        function_name1 = tetrad[0]
         order_quantity = order_quantity + 1
     elif tetrad[0] == 'begin':
         if_main.append(0)
-        ANS.append("PUSH  AX")
-        ANS.append("PUSH  BX")
-        ANS.append("PUSH  CX")
-        ANS.append("PUSH  DX")
         return True
     elif tetrad[0] == 'begin_t':
+        start = 1
         ANS.append("assume  cs:code")
         ANS.append("code    segment")
         ANS.append("MOV  AX,  123BH")
@@ -564,25 +557,85 @@ def mak_assemble(tetrad):
         ANS.append("MOV  SS,  AX")
         ANS.append("MOV  SP,  0010H")
         if_main.append(1)
-        order_quantity = order_quantity + 7
     elif tetrad[0] == 'end':
         ip = if_main.pop()
         if ip == 0:
             name = function_name.pop()
             ANS.append("ret")
-            ANS.append(name + " endp")
             order_quantity = order_quantity + 2
         else:
             ANS.append("MOV AX, 4C00H")
             ANS.append("INT 21H")
             ANS.append("code ends")
-            ANS.append("end")
+            ANS.append("end ")
             order_quantity = order_quantity + 4
+        if len(goto_state) > 1:
+            num_second = goto_state.pop()
+            num_first = goto_state.pop()
+            if len(delay_stack) > 0 and order_quantity > 0:
+                if num_second == 2:
+                    goto_state.append(num_second)
+                mark1 = 's' + str(len(f_count)) + 'f'
+                f_count.append(mark1)
+                ANS[len(ANS) - order_quantity] = mark1 + ': ' + ANS[len(ANS) - order_quantity]
+                for k_name in delay_stack:
+                    ANS[k_name] = ANS[k_name] + mark1
+                delay_stack.clear()
+                if_stack.clear()
+            else:
+                # print(tetrad)
+                goto_state.append(num_first)
+                goto_state.append(num_second)
+                # print(goto_state)
+        # while 回填创建标号部分
+        if len(do_stack2) > 0 and order_quantity > 0:
+            if re.match(r'^s[0-9]+f', ANS[len(ANS) - order_quantity]):
+                for ice in range(0, len(ANS[len(ANS) - order_quantity]) - 1):
+                    if ANS[len(ANS) - order_quantity][ice] != ':':
+                        ice = ice + 1
+                    else:
+                        break
+                new_name = ANS[len(ANS) - order_quantity][0:ice]
+            else:
+                new_name = 's' + str(len(f_count)) + 'f'
+                f_count.append(new_name)
+                ANS[len(ANS) - order_quantity] = new_name + ": " + ANS[len(ANS) - order_quantity]
+            for mmp in do_stack2:
+                ANS[mmp] = ANS[mmp] + new_name
+            do_stack2.clear()
+            do_stack1.clear()
+        elif switch_wh == 1:
+            '''
+            new_name = 's' + str(len(f_count)) + 'f'
+            f_count.append(new_name)
+            ANS[len(ANS) - order_quantity] = new_name + ": " + ANS[len(ANS) - order_quantity]
+            '''
+            if re.match(r'^s[0-9]+f', ANS[len(ANS) - order_quantity]):
+                for ice in range(0, len(ANS[len(ANS) - order_quantity]) - 1):
+                    if ANS[len(ANS) - order_quantity][ice] != ':':
+                        ice = ice + 1
+                    else:
+                        break
+                new_name = ANS[len(ANS) - order_quantity][0:ice]
+            else:
+                new_name = 's' + str(len(f_count)) + 'f'
+                f_count.append(new_name)
+                ANS[len(ANS) - order_quantity] = new_name + ": " + ANS[len(ANS) - order_quantity]
+            while_stack.append(new_name)
+            switch_wh = 0
 
         return False
     elif tetrad[0] == "return":
-        ANS.append("ret")
-        order_quantity = order_quantity + 1
+        h_name = getsym.find_re(function_name1)
+        if type(tetrad[3]) == int:
+            i_num = tetrad[3]
+            i_num = num_change(str(hex(i_num))) + 'H'
+            ANS.append("MOV " + h_name + ', ' + i_num)
+        else:
+            s_time = getsym.get_pos(tetrad[3])
+            ANS.append("MOV AX," + s_time)
+            ANS.append("MOV " + h_name + ', ' + "AX")
+            order_quantity = order_quantity + 1
         return True
     elif tetrad[0] == ' ' and tetrad[3] in data_type:
         RDL['M*'].append(tetrad[1])
@@ -613,13 +666,13 @@ def mak_assemble(tetrad):
         '''
         h_name = address[2]
         if not h_name.isdigit():
+            # sys.exit(0)
             h_name = getsym.get_pos(h_name)
         else:
             h_name = num_change(hex(int(h_name))) + "H"
         ANS.append('CMP ' + register_list[address[0]] + ', ' + h_name)
-        ANS.append(operator3[tetrad[0]]+' ')
+        ANS.append(operator3[tetrad[0]] + ' ')
         order_quantity = order_quantity + 2
-        print(tetrad)
         mm = list(tetrad[3].keys())
         if mm[0] in RDL['M*']:
             RDL['M*'].remove(mm[0])
@@ -634,46 +687,73 @@ def mak_assemble(tetrad):
 
     # 开始进行if--返填动作
     if len(goto_state) > 1:
-        num_first = goto_state.popleft()
-        num_second = goto_state.popleft()
-        if num_first < num_second and order_quantity > 0:
+        if order_quantity == 0 and tetrad[0] != 'if':
+            print(tetrad)
+            print(RDL)
+            print(seg5)
+            print(ANS[len(ANS) - 1])
+        num_second = goto_state.pop()
+        num_first = goto_state.pop()
+        if len(delay_stack) > 0 and order_quantity > 0:
             if num_second == 2:
-                goto_state.appendleft(num_second)
+                goto_state.append(num_second)
             mark = 's' + str(len(f_count)) + 'f'
             f_count.append(mark)
-            if order_quantity == 0:
-                print(tetrad)
-                print(RDL)
-                print(seg5)
-                print('fuck you ')
-                sys.exit(0)
-            ANS[len(ANS) - order_quantity] =mark + ': ' + ANS[len(ANS) - order_quantity]
-            mark1 = if_stack.popleft()
-            ANS[mark1] = ANS[mark1] + mark
+            ANS[len(ANS) - order_quantity] = mark + ': ' + ANS[len(ANS) - order_quantity]
+            for k_name in delay_stack:
+                ANS[k_name] = ANS[k_name] + mark
+            delay_stack.clear()
         else:
-            goto_state.appendleft(num_second)
-            goto_state.appendleft(num_first)
+            print(tetrad)
+            print("abc")
+            goto_state.append(num_first)
+            goto_state.append(num_second)
+            print(goto_state)
         # while 回填创建标号部分
-    if len(goto_state1) > 0:
-        h1 = goto_state1.popleft()
-        if h1 == 3:
-            new_name = str(len(f_count)) + 'f'
-            f_count.append(new_name)
-            ANS[len(ANS) - order_quantity] = new_name + ": " + ANS[len(ANS) - order_quantity]
-            mmp = while_stack.popleft()
-            ANS[mmp] = ANS[mmp] + new_name
-        elif h1 == 1 and switch_wh == 0:
+
+    if len(do_stack2) > 0 and order_quantity > 0:
+        print(re.match(r'^s[0-9]+f', ANS[len(ANS) - order_quantity]))
+        if re.match(r'^s[0-9]+f', ANS[len(ANS) - order_quantity]):
+            for ice in range(0, len(ANS[len(ANS) - order_quantity]) - 1):
+                if ANS[len(ANS) - order_quantity][ice] != ':':
+                    ice = ice + 1
+                else:
+                    break
+            new_name = ANS[len(ANS) - order_quantity][0:ice]
+        else:
             new_name = 's' + str(len(f_count)) + 'f'
             f_count.append(new_name)
             ANS[len(ANS) - order_quantity] = new_name + ": " + ANS[len(ANS) - order_quantity]
-            # print("fuck")
-            while_stack.append(new_name)
-            # mmp = while_stack.popleft()
-            # ANS[mmp] = ANS[mmp] + new_name
-            # ANS[while_stack.popleft()] = new_name + " " + ANS[while_stack.popleft()]
+        for mmp in do_stack2:
+            ANS[mmp] = ANS[mmp] + new_name
+        do_stack2.clear()
+    elif switch_wh == 1 and order_quantity > 0:
+
+        '''new_name = 's' + str(len(f_count)) + 'f'
+        f_count.append(new_name)
+        ANS[len(ANS) - order_quantity] = new_name + ": " + ANS[len(ANS) - order_quantity]
+        '''
+        if re.match(r'^s[0-9]+f', ANS[len(ANS) - order_quantity]):
+            for ice in range(0, len(ANS[len(ANS) - order_quantity]) - 1):
+                if ANS[len(ANS) - order_quantity][ice] != ':':
+                    ice = ice + 1
+                else:
+                    break
+            new_name = ANS[len(ANS) - order_quantity][0:ice]
         else:
-            goto_state1.appendleft(h1)
+            new_name = 's' + str(len(f_count)) + 'f'
+            f_count.append(new_name)
+            ANS[len(ANS) - order_quantity] = new_name + ": " + ANS[len(ANS) - order_quantity]
+        while_stack.append(new_name)
+        switch_wh = 0
+    '''
+    if start == 1 and tetrad[0] != 'begin_t' and order_quantity != 0:
+        print(tetrad)
+        ANS[len(ANS)-order_quantity] = "start: "+ANS[len(ANS)-order_quantity]
+        start = 0
+    '''
     order_quantity = 0
+
     return True
 
 
@@ -681,12 +761,12 @@ def mak_assemble(tetrad):
 
 
 def final(team):
+    h_state = False
     for boy in range(0, len(team)):
         if boy == len(team) - 1:
             h_state = mak_assemble(team[boy])
         else:
             mak_assemble(team[boy])
-
     if h_state:
         for jk in RDL.keys():
             if jk != "M*" and RDL[jk] != 'null':
@@ -729,10 +809,12 @@ for i in range(5, 8):
 for i in ANS:
     print(i)
 '''
+
 for h in QT:
     n = get_names(h)
     m = is_active_plus(n, h)
     final(h)
+print(QT)
 
 with open("code.asm", mode='w+') as file:
     for i in ANS:
